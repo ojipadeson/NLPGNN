@@ -215,7 +215,7 @@ class TFLoader(object):
         raw_dataset = tf.data.TFRecordDataset(self.filename)
         dataset = raw_dataset.map(map_func=lambda record: self.decode_record(record))
         dataset = dataset.shuffle(1000)
-        dataset = dataset.repeat(self.epoch)
+        # dataset = dataset.repeat(self.epoch)
 
         dataset = dataset.batch(batch_size=self.batch_size,
                                 drop_remainder=True)

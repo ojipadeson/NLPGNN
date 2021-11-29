@@ -1,3 +1,5 @@
+import time
+from tqdm import tqdm
 import numpy as np
 import tensorflow as tf
 
@@ -113,7 +115,7 @@ for epoch in range(total_epochs):
     train_predicts = []
     train_true_label = []
     train_masks = []
-    for X, token_type_id, input_mask, Y in ner_load.load_train():
+    for X, token_type_id, input_mask, Y in tqdm(ner_load.load_train()):
         with tf.GradientTape() as tape:
             predict = model([X, token_type_id, input_mask])
             loss = sparse_categotical_loss(Y, predict)
@@ -139,9 +141,11 @@ for epoch in range(total_epochs):
         optimizer_bert.apply_gradients(grads_and_vars=zip(grads_bert, model.variables))
         Batch += 1
 
+    time.sleep(0.5)
     print('Epoch {:3d}'.format(epoch + 1))
     ner_evaluation(train_true_label, train_predicts, train_masks)
     print()
+    time.sleep(0.5)
 
     manager.save(checkpoint_number=(epoch + 1))
 
@@ -149,11 +153,15 @@ for epoch in range(total_epochs):
     valid_predicts = []
     valid_true_label = []
     valid_masks = []
-    for valid_X, valid_token_type_id, valid_input_mask, valid_Y in ner_load.load_valid():
+    print('Valid for Epoch {:3d}'.format(epoch + 1))
+    time.sleep(0.5)
+    for valid_X, valid_token_type_id, valid_input_mask, valid_Y in tqdm(ner_load.load_valid()):
         predict = model.predict([valid_X, valid_token_type_id, valid_input_mask])
         predict = tf.argmax(predict, -1)
         valid_predicts.append(predict)
         valid_true_label.append(valid_Y)
         valid_masks.append(valid_input_mask)
+    time.sleep(0.5)
     print(writer.label2id())
     ner_evaluation(valid_true_label, valid_predicts, valid_masks)
+    time.sleep(0.5)

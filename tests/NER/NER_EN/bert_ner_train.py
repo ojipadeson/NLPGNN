@@ -115,6 +115,11 @@ Batch = 0
 Best_F1 = 0
 epoch_no_improve = 0
 
+s = 0
+for _, _, _, _ in tqdm(ner_load.load_train()):
+    s += 1
+print(s)
+
 for epoch in range(total_epochs):
     train_predicts = []
     train_true_label = []

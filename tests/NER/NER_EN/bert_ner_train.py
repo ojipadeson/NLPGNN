@@ -125,17 +125,17 @@ for epoch in range(total_epochs):
             train_true_label.append(Y)
             train_masks.append(input_mask)
 
-            f1 = f1score(Y, predict)
-            precision = precsionscore(Y, predict)
-            recall = recallscore(Y, predict)
-            accuracy = accuarcyscore(Y, predict)
-
-            with summary_writer.as_default():
-                tf.summary.scalar("loss", loss, step=Batch)
-                tf.summary.scalar("acc", accuracy, step=Batch)
-                tf.summary.scalar("f1", f1, step=Batch)
-                tf.summary.scalar("precision", precision, step=Batch)
-                tf.summary.scalar("recall", recall, step=Batch)
+            # f1 = f1score(Y, predict)
+            # precision = precsionscore(Y, predict)
+            # recall = recallscore(Y, predict)
+            # accuracy = accuarcyscore(Y, predict)
+            #
+            # with summary_writer.as_default():
+            #     tf.summary.scalar("loss", loss, step=Batch)
+            #     tf.summary.scalar("acc", accuracy, step=Batch)
+            #     tf.summary.scalar("f1", f1, step=Batch)
+            #     tf.summary.scalar("precision", precision, step=Batch)
+            #     tf.summary.scalar("recall", recall, step=Batch)
 
         grads_bert = tape.gradient(loss, model.variables)
         optimizer_bert.apply_gradients(grads_and_vars=zip(grads_bert, model.variables))

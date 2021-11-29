@@ -114,8 +114,9 @@ step = 0
 for _, _, _, _ in ner_load.load_train():
     step += 1
 Epoch_Batch = int(step / total_epochs)
+print(Epoch_Batch, step / total_epochs)
 assert Epoch_Batch == step / total_epochs
-print('Step for 1 epoch: {}'.format(Epoch_Batch))
+print('Step for 1 epoch: {}\n'.format(Epoch_Batch))
 
 train_Batch = 0
 train_predicts = []

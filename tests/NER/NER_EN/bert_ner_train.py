@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 
 from nlpgnn.datas.checkpoint import LoadCheckpoint
@@ -6,6 +7,7 @@ from nlpgnn.metrics import Metric
 from nlpgnn.models import bert
 from nlpgnn.optimizers import optim
 from nlpgnn.tools import bert_init_weights_from_checkpoint
+from sklearn.metrics import classification_report
 
 # 载入参数
 # LoadCheckpoint(language='zh', model="bert", parameters="base", cased=True, url=None)
@@ -19,8 +21,23 @@ param, vocab_file, model_path = load_check.load_bert_param()
 
 # 定制参数
 param.batch_size = 128
-param.maxlen = 256
+param.maxlen = 128
 param.label_size = 9
+total_epochs = 10
+
+
+def ner_evaluation(true_label: list, predicts: list, masks: list):
+    all_predict = []
+    all_true = []
+    true_label = [tf.reshape(item, [-1]).numpy() for item in true_label]
+    predicts = [tf.reshape(item, [-1]).numpy() for item in predicts]
+    masks = [tf.reshape(item, [-1]).numpy() for item in masks]
+    for i, j, m in zip(true_label, predicts, masks):
+        index = np.argwhere(m == 1)
+        all_true.extend(i[index].reshape(-1))
+        all_predict.extend(j[index].reshape(-1))
+    report = classification_report(all_true, all_predict, digits=4) # paramaters labels
+    print(report)
 
 
 # 构建模型
@@ -70,9 +87,8 @@ bert_init_weights_from_checkpoint(model,
 
 # 写入数据 通过check_exist=True参数控制仅在第一次调用时写入
 writer = TFWriter(param.maxlen, vocab_file,
-                  modes=["train"], check_exist=False)
-
-ner_load = TFLoader(param.maxlen, param.batch_size, epoch=8)
+                  modes=["train", "valid"], check_exist=False)
+ner_load = TFLoader(param.maxlen, param.batch_size, epoch=total_epochs)
 
 # 训练模型
 # 使用tensorboard
@@ -90,23 +106,63 @@ manager = tf.train.CheckpointManager(checkpoint, directory="./save",
                                      checkpoint_name="model.ckpt",
                                      max_to_keep=3)
 # For train model
+print('Training Begin')
 Batch = 0
+Epoch = 0
+
+step = 0
+for _, _, _, _ in ner_load.load_train():
+    step += 1
+Epoch_Batch = int(step / total_epochs)
+assert Epoch_Batch == step / total_epochs
+print('Step for 1 epoch: {}'.format(Epoch_Batch))
+
+train_Batch = 0
+train_predicts = []
+train_true_label = []
+train_masks = []
 for X, token_type_id, input_mask, Y in ner_load.load_train():
     with tf.GradientTape() as tape:
         predict = model([X, token_type_id, input_mask])
         loss = sparse_categotical_loss(Y, predict)
+        
+        train_predict = tf.argmax(predict, -1)
+        train_predicts.append(predict)
+        train_true_label.append(Y)
+        train_masks.append(input_mask)
+
+        if (Batch + 1) % Epoch_Batch == 0:
+            print('Epoch {:3d}'.format(Epoch + 1))
+            ner_evaluation(train_true_label, train_predicts, train_masks)
+            print()
+            # print("Epoch:{}\tloss:{:.4f}".format(Epoch + 1, loss.numpy()))
+            # print("Epoch:{}\tacc:{:.4f}".format(Epoch + 1, accuracy))
+            # print("Epoch:{}\tprecision{:.4f}".format(Epoch + 1, precision))
+            # print("Epoch:{}\trecall:{:.4f}".format(Epoch + 1, recall))
+            # print("Epoch:{}\tf1score:{:.4f}\n".format(Epoch + 1, f1))
+            manager.save(checkpoint_number=Epoch)
+            train_Batch = 0
+            train_predicts = []
+            train_true_label = []
+            train_masks = []
+
+            valid_Batch = 0
+            valid_predicts = []
+            valid_true_label = []
+            valid_masks = []
+            for valid_X, valid_token_type_id, valid_input_mask, valid_Y in ner_load.load_valid():
+                predict = model.predict([valid_X, valid_token_type_id, valid_input_mask])
+                predict = tf.argmax(predict, -1)
+                valid_predicts.append(predict)
+                valid_true_label.append(valid_Y)
+                valid_masks.append(input_mask)
+            print(writer.label2id())
+            ner_evaluation(valid_true_label, valid_predicts, valid_masks)
 
         f1 = f1score(Y, predict)
         precision = precsionscore(Y, predict)
         recall = recallscore(Y, predict)
         accuracy = accuarcyscore(Y, predict)
-        if Batch % 101 == 0:
-            print("Batch:{}\tloss:{:.4f}".format(Batch, loss.numpy()))
-            print("Batch:{}\tacc:{:.4f}".format(Batch, accuracy))
-            print("Batch:{}\tprecision{:.4f}".format(Batch, precision))
-            print("Batch:{}\trecall:{:.4f}".format(Batch, recall))
-            print("Batch:{}\tf1score:{:.4f}\n".format(Batch, f1))
-            manager.save(checkpoint_number=Batch)
 
         with summary_writer.as_default():
             tf.summary.scalar("loss", loss, step=Batch)

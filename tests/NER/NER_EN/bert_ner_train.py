@@ -26,6 +26,7 @@ param.batch_size = 32
 param.maxlen = 128
 param.label_size = 9
 total_epochs = 10
+patience = 5
 
 
 def ner_evaluation(true_label: list, predicts: list, masks: list):
@@ -40,6 +41,7 @@ def ner_evaluation(true_label: list, predicts: list, masks: list):
         all_predict.extend(j[index].reshape(-1))
     report = classification_report(all_true, all_predict, digits=4)
     print(report)
+    return report['macro avg']['f1-score']
 
 
 # 构建模型
@@ -110,12 +112,14 @@ manager = tf.train.CheckpointManager(checkpoint, directory="./save",
 # For train model
 print('Training Begin\n')
 Batch = 0
+Best_F1 = 0
+epoch_no_improve = 0
 
 for epoch in range(total_epochs):
     train_predicts = []
     train_true_label = []
     train_masks = []
-    for X, token_type_id, input_mask, Y in tqdm(ner_load.load_train()):
+    for i, (X, token_type_id, input_mask, Y) in tqdm(enumerate(ner_load.load_train())):
         with tf.GradientTape() as tape:
             predict = model([X, token_type_id, input_mask])
             loss = sparse_categotical_loss(Y, predict)
@@ -155,7 +159,7 @@ for epoch in range(total_epochs):
     valid_masks = []
     print('Valid for Epoch {:3d}'.format(epoch + 1))
     time.sleep(0.5)
-    for valid_X, valid_token_type_id, valid_input_mask, valid_Y in tqdm(ner_load.load_valid()):
+    for valid_X, valid_token_type_id, valid_input_mask, valid_Y in tqdm(enumerate(ner_load.load_valid())):
         predict = model.predict([valid_X, valid_token_type_id, valid_input_mask])
         predict = tf.argmax(predict, -1)
         valid_predicts.append(predict)
@@ -163,5 +167,14 @@ for epoch in range(total_epochs):
         valid_masks.append(valid_input_mask)
     time.sleep(0.5)
     print(writer.label2id())
-    ner_evaluation(valid_true_label, valid_predicts, valid_masks)
+    valid_F1 = ner_evaluation(valid_true_label, valid_predicts, valid_masks)
+    if valid_F1 > Best_F1:
+        Best_F1 = valid_F1
+        model.save('best_model.h5')
+    else:
+        epoch_no_improve += 1
+
+    if epoch_no_improve >= patience:
+        print('Early Stop')
+        break
     time.sleep(0.5)

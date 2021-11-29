@@ -8,6 +8,8 @@ import tensorflow as tf
 
 from nlpgnn.tokenizers import tokenization
 
+# FangRui
+
 
 class TFWriter(object):
     def __init__(self, maxlen, vocab_files, modes, task="NER", do_low_case=True,

@@ -18,8 +18,8 @@ load_check = LoadCheckpoint(language='en', cased=True)
 param, vocab_file, model_path = load_check.load_bert_param()
 
 # 定制参数
-param.batch_size = 2
-param.maxlen = 10
+param.batch_size = 128
+param.maxlen = 256
 param.label_size = 9
 
 
@@ -105,7 +105,7 @@ for X, token_type_id, input_mask, Y in ner_load.load_train():
             print("Batch:{}\tacc:{:.4f}".format(Batch, accuracy))
             print("Batch:{}\tprecision{:.4f}".format(Batch, precision))
             print("Batch:{}\trecall:{:.4f}".format(Batch, recall))
-            print("Batch:{}\tf1score:{:.4f}".format(Batch, f1))
+            print("Batch:{}\tf1score:{:.4f}\n".format(Batch, f1))
             manager.save(checkpoint_number=Batch)
 
         with summary_writer.as_default():

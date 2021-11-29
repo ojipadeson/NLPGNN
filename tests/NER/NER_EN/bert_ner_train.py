@@ -119,7 +119,7 @@ for epoch in range(total_epochs):
     train_predicts = []
     train_true_label = []
     train_masks = []
-    for i, (X, token_type_id, input_mask, Y) in tqdm(enumerate(ner_load.load_train())):
+    for X, token_type_id, input_mask, Y in tqdm(ner_load.load_train()):
         with tf.GradientTape() as tape:
             predict = model([X, token_type_id, input_mask])
             loss = sparse_categotical_loss(Y, predict)
@@ -159,7 +159,7 @@ for epoch in range(total_epochs):
     valid_masks = []
     print('Valid for Epoch {:3d}'.format(epoch + 1))
     time.sleep(0.5)
-    for valid_X, valid_token_type_id, valid_input_mask, valid_Y in tqdm(enumerate(ner_load.load_valid())):
+    for valid_X, valid_token_type_id, valid_input_mask, valid_Y in tqdm(ner_load.load_valid()):
         predict = model.predict([valid_X, valid_token_type_id, valid_input_mask])
         predict = tf.argmax(predict, -1)
         valid_predicts.append(predict)

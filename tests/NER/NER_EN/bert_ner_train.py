@@ -2,6 +2,7 @@ import time
 from tqdm import tqdm
 import numpy as np
 import tensorflow as tf
+from tensorflow.keras.utils import Progbar
 
 from nlpgnn.datas.checkpoint import LoadCheckpoint
 from nlpgnn.datas.dataloader import TFWriter, TFLoader
@@ -115,30 +116,32 @@ Batch = 0
 Best_F1 = 0
 epoch_no_improve = 0
 
-s = 0
+total_step = 0
 for _, _, _, _ in tqdm(ner_load.load_train()):
-    s += 1
-print(s)
+    total_step += 1
+print('Total Step: {}'.format(total_step))
+
+metrics_names = ['F1']
 
 for epoch in range(total_epochs):
     train_predicts = []
     train_true_label = []
     train_masks = []
+    pb_i = Progbar(total_step, stateful_metrics=metrics_names)
     for X, token_type_id, input_mask, Y in tqdm(ner_load.load_train()):
         with tf.GradientTape() as tape:
             predict = model([X, token_type_id, input_mask])
             loss = sparse_categotical_loss(Y, predict)
 
             train_predict = tf.argmax(predict, -1)
-            train_predicts.append(predict)
+            train_predicts.append(train_predict)
             train_true_label.append(Y)
             train_masks.append(input_mask)
 
-            # f1 = f1score(Y, predict)
-            # precision = precsionscore(Y, predict)
-            # recall = recallscore(Y, predict)
-            # accuracy = accuarcyscore(Y, predict)
-            #
+            f1 = f1score(Y, predict)
+            values = [('F1', f1)]
+            pb_i.add(1, values=values)
+
             # with summary_writer.as_default():
             #     tf.summary.scalar("loss", loss, step=Batch)
             #     tf.summary.scalar("acc", accuracy, step=Batch)

@@ -145,8 +145,8 @@ for epoch in range(total_epochs):
             recall = recallscore(Y, predict)
             accuracy = accuarcyscore(Y, predict)
 
-            values = [('F1', f1), ('precision', precision), ('recall', recall), ('acc', accuracy)]
-            pb_i.add(1, values=values)
+        values = [('F1', f1), ('precision', precision), ('recall', recall), ('acc', accuracy)]
+        pb_i.add(1, values=values)
 
         grads_bert = tape.gradient(loss, model.variables)
         optimizer_bert.apply_gradients(grads_and_vars=zip(grads_bert, model.variables))
@@ -178,6 +178,7 @@ for epoch in range(total_epochs):
     if valid_F1 > Best_F1:
         Best_F1 = valid_F1
         model.save_weights('best_model_weights.h5')
+        print('Model saved successfully')
     else:
         epoch_no_improve += 1
 

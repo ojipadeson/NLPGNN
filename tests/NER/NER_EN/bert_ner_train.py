@@ -129,6 +129,8 @@ for epoch in range(total_epochs):
     train_predicts = []
     train_true_label = []
     train_masks = []
+    print('Epoch {:3d}'.format(epoch + 1))
+    time.sleep(0.5)
     pb_i = Progbar(total_step, stateful_metrics=metrics_names)
     for X, token_type_id, input_mask, Y in ner_load.load_train():
         with tf.GradientTape() as tape:
@@ -153,7 +155,6 @@ for epoch in range(total_epochs):
         Batch += 1
 
     time.sleep(0.5)
-    print('Epoch {:3d}'.format(epoch + 1))
     ner_evaluation(train_true_label, train_predicts, train_masks)
     print()
     time.sleep(0.5)

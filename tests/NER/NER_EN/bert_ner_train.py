@@ -121,14 +121,14 @@ for _, _, _, _ in tqdm(ner_load.load_train()):
     total_step += 1
 print('Total Step: {}'.format(total_step))
 
-metrics_names = ['F1']
+metrics_names = ['F1', 'precision', 'recall', 'acc']
 
 for epoch in range(total_epochs):
     train_predicts = []
     train_true_label = []
     train_masks = []
     pb_i = Progbar(total_step, stateful_metrics=metrics_names)
-    for X, token_type_id, input_mask, Y in tqdm(ner_load.load_train()):
+    for X, token_type_id, input_mask, Y in ner_load.load_train():
         with tf.GradientTape() as tape:
             predict = model([X, token_type_id, input_mask])
             loss = sparse_categotical_loss(Y, predict)
@@ -139,15 +139,12 @@ for epoch in range(total_epochs):
             train_masks.append(input_mask)
 
             f1 = f1score(Y, predict)
-            values = [('F1', f1)]
-            pb_i.add(1, values=values)
+            precision = precsionscore(Y, predict)
+            recall = recallscore(Y, predict)
+            accuracy = accuarcyscore(Y, predict)
 
-            # with summary_writer.as_default():
-            #     tf.summary.scalar("loss", loss, step=Batch)
-            #     tf.summary.scalar("acc", accuracy, step=Batch)
-            #     tf.summary.scalar("f1", f1, step=Batch)
-            #     tf.summary.scalar("precision", precision, step=Batch)
-            #     tf.summary.scalar("recall", recall, step=Batch)
+            values = [('F1', f1), ('precision', precision), ('recall', recall), ('acc', accuracy)]
+            pb_i.add(1, values=values)
 
         grads_bert = tape.gradient(loss, model.variables)
         optimizer_bert.apply_gradients(grads_and_vars=zip(grads_bert, model.variables))
@@ -167,7 +164,7 @@ for epoch in range(total_epochs):
     valid_masks = []
     print('Valid for Epoch {:3d}'.format(epoch + 1))
     time.sleep(0.5)
-    for valid_X, valid_token_type_id, valid_input_mask, valid_Y in tqdm(ner_load.load_valid()):
+    for valid_X, valid_token_type_id, valid_input_mask, valid_Y in ner_load.load_valid():
         predict = model.predict([valid_X, valid_token_type_id, valid_input_mask])
         predict = tf.argmax(predict, -1)
         valid_predicts.append(predict)

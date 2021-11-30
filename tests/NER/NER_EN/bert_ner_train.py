@@ -184,6 +184,7 @@ for epoch in range(total_epochs):
         print('Model saved successfully')
     else:
         epoch_no_improve += 1
+        print('Epoch no improve: {}'.format(epoch_no_improve))
 
     if epoch_no_improve >= patience:
         print('Early Stop')

@@ -236,3 +236,17 @@ class TFLoader(object):
         dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
         return dataset
+
+    def load_test(self):
+        self.filename = os.path.join("Input", "test.tfrecords")
+        raw_dataset = tf.data.TFRecordDataset(self.filename)
+        dataset = raw_dataset.map(
+            lambda record: self.decode_record(record)
+        )
+
+        dataset = dataset.batch(
+            batch_size=self.batch_size,
+            drop_remainder=False)
+        dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
+
+        return dataset

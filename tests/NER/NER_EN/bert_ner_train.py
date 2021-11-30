@@ -1,6 +1,7 @@
 import time
 from tqdm import tqdm
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 from tensorflow.keras.utils import Progbar
 
@@ -184,3 +185,21 @@ for epoch in range(total_epochs):
         print('Early Stop')
         break
     time.sleep(0.5)
+
+model.load_weights('best_model_weights.h5')
+test_Batch = 0
+test_predicts = []
+test_true_label = []
+test_masks = []
+print('\nTest model')
+time.sleep(0.5)
+for test_X, test_token_type_id, test_input_mask, test_Y in ner_load.load_test():
+    predict = model.predict([test_X, test_token_type_id, test_input_mask])
+    predict = tf.argmax(predict, -1)
+    test_predicts.append(predict)
+    test_true_label.append(test_Y)
+    test_masks.append(test_input_mask)
+time.sleep(0.5)
+print(writer.label2id())
+test_F1 = ner_evaluation(test_true_label, test_predicts, test_masks)
+pd.DataFrame(test_predicts).to_csv('test_predict.csv', index=False)

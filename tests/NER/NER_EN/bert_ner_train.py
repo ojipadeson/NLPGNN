@@ -42,9 +42,9 @@ def ner_evaluation(true_label: list, predicts: list, masks: list, label_names: d
         all_true.extend(i[index].reshape(-1))
         all_predict.extend(j[index].reshape(-1))
     report_dict = classification_report(all_true, all_predict,
-                                        target_names=list(label_names.values()), digits=4, output_dict=True)
+                                        target_names=list(label_names.keys()), digits=4, output_dict=True)
     report = classification_report(all_true, all_predict,
-                                   target_names=list(label_names.values()), digits=4)
+                                   target_names=list(label_names.keys()), digits=4)
     print(report)
     return report_dict['macro avg']['f1-score']
 

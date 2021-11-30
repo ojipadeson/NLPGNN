@@ -31,7 +31,7 @@ total_epochs = 100
 patience = 10
 
 
-def ner_evaluation(true_label: list, predicts: list, masks: list):
+def ner_evaluation(true_label: list, predicts: list, masks: list, label_names: dict):
     all_predict = []
     all_true = []
     true_label = [tf.reshape(item, [-1]).numpy() for item in true_label]
@@ -41,8 +41,10 @@ def ner_evaluation(true_label: list, predicts: list, masks: list):
         index = np.argwhere(m == 1)
         all_true.extend(i[index].reshape(-1))
         all_predict.extend(j[index].reshape(-1))
-    report_dict = classification_report(all_true, all_predict, digits=4, output_dict=True)
-    report = classification_report(all_true, all_predict, digits=4)
+    report_dict = classification_report(all_true, all_predict,
+                                        target_names=list(label_names.values()), digits=4, output_dict=True)
+    report = classification_report(all_true, all_predict,
+                                   target_names=list(label_names.values()), digits=4)
     print(report)
     return report_dict['macro avg']['f1-score']
 
@@ -155,7 +157,7 @@ for epoch in range(total_epochs):
         Batch += 1
 
     time.sleep(0.5)
-    ner_evaluation(train_true_label, train_predicts, train_masks)
+    ner_evaluation(train_true_label, train_predicts, train_masks, writer.label2id())
     print()
     time.sleep(0.5)
 
@@ -175,7 +177,7 @@ for epoch in range(total_epochs):
         valid_masks.append(valid_input_mask)
     time.sleep(0.5)
     print(writer.label2id())
-    valid_F1 = ner_evaluation(valid_true_label, valid_predicts, valid_masks)
+    valid_F1 = ner_evaluation(valid_true_label, valid_predicts, valid_masks, writer.label2id())
     if valid_F1 > Best_F1:
         Best_F1 = valid_F1
         model.save_weights('best_model_weights.h5')
@@ -203,5 +205,5 @@ for test_X, test_token_type_id, test_input_mask, test_Y in ner_load.load_test():
     test_masks.append(test_input_mask)
 time.sleep(0.5)
 print(writer.label2id())
-test_F1 = ner_evaluation(test_true_label, test_predicts, test_masks)
+test_F1 = ner_evaluation(test_true_label, test_predicts, test_masks, writer.label2id())
 pd.DataFrame(test_predicts).to_csv('test_predict.csv', index=False)

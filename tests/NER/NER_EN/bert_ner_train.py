@@ -26,8 +26,8 @@ param, vocab_file, model_path = load_check.load_bert_param()
 param.batch_size = 32
 param.maxlen = 128
 param.label_size = 9
-total_epochs = 10
-patience = 5
+total_epochs = 100
+patience = 10
 
 
 def ner_evaluation(true_label: list, predicts: list, masks: list):

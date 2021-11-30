@@ -16,6 +16,7 @@ param.batch_size = 8
 param.maxlen = 100
 param.label_size = 9
 
+
 def ner_evaluation(true_label: list, predicts: list, masks: list):
     all_predict = []
     all_true = []
@@ -26,8 +27,9 @@ def ner_evaluation(true_label: list, predicts: list, masks: list):
         index = np.argwhere(m == 1)
         all_true.extend(i[index].reshape(-1))
         all_predict.extend(j[index].reshape(-1))
-    report = classification_report(all_true, all_predict, digits=4)# paramaters labels
+    report = classification_report(all_true, all_predict, digits=4)  # paramaters labels
     print(report)
+
 
 class BERT_NER(tf.keras.Model):
     def __init__(self, param, **kwargs):
@@ -61,7 +63,7 @@ model.summary()
 
 # 写入数据 通过check_exist=True参数控制仅在第一次调用时写入
 writer = TFWriter(param.maxlen, vocab_file,
-                    modes=["valid"], check_exist=False)
+                  modes=["valid"], check_exist=False)
 
 ner_load = TFLoader(param.maxlen, param.batch_size, epoch=3)
 
@@ -87,6 +89,6 @@ for X, token_type_id, input_mask, Y in ner_load.load_valid():
     masks.append(input_mask)
 print(writer.label2id())
 ner_evaluation(true_label, predicts, masks)
-    # print("Sentence", writer.convert_id_to_vocab(tf.reshape(X,[-1]).numpy()))
-    #
-    # print("Label", writer.convert_id_to_label(tf.reshape(predict,[-1]).numpy()))
+# print("Sentence", writer.convert_id_to_vocab(tf.reshape(X,[-1]).numpy()))
+#
+# print("Label", writer.convert_id_to_label(tf.reshape(predict,[-1]).numpy()))

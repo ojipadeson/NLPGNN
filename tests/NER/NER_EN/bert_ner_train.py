@@ -40,9 +40,10 @@ def ner_evaluation(true_label: list, predicts: list, masks: list):
         index = np.argwhere(m == 1)
         all_true.extend(i[index].reshape(-1))
         all_predict.extend(j[index].reshape(-1))
-    report = classification_report(all_true, all_predict, digits=4, output_dict=True)
+    report_dict = classification_report(all_true, all_predict, digits=4, output_dict=True)
+    report = classification_report(all_true, all_predict, digits=4)
     print(report)
-    return report['macro avg']['f1-score']
+    return report_dict['macro avg']['f1-score']
 
 
 # 构建模型
@@ -97,7 +98,7 @@ ner_load = TFLoader(param.maxlen, param.batch_size, epoch=1)
 
 # 训练模型
 # 使用tensorboard
-summary_writer = tf.summary.create_file_writer("./tensorboard")
+# summary_writer = tf.summary.create_file_writer("./tensorboard")
 
 # Metrics
 f1score = Metric.SparseF1Score(average="macro")
@@ -175,7 +176,7 @@ for epoch in range(total_epochs):
     valid_F1 = ner_evaluation(valid_true_label, valid_predicts, valid_masks)
     if valid_F1 > Best_F1:
         Best_F1 = valid_F1
-        model.save('best_model.h5')
+        model.save_weights('best_model_weights.h5')
     else:
         epoch_no_improve += 1
 
